@@ -1,18 +1,23 @@
 {
-"name": "Reflect & Leap",
-"short_name": "ReflectLeap",
-"description": "未挑戦を、明日の原動力に。成長循環型日記＆TODO",
-"start_url": "./index.html",
-"display": "standalone",
-"orientation": "portrait",
-"background_color": "#020617",
-"theme_color": "#020617",
-"icons": [
-{
-"src": "data:image/svg+xml,",
-"sizes": "192x192 512x512",
-"type": "image/svg+xml",
-"purpose": "any maskable"
-}
-]
+  "name": "Reflect & Leap",
+  "short_name": "ReflectLeap",
+  "start_url": "/reflect-leap/",
+  "scope": "/reflect-leap/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
