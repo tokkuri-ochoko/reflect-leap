@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Reflect & Leap - 成長循環型日記＆TODO</title>
+
+    <!-- PWA / Mobile Web App Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Reflect & Leap">
+    <meta name="theme-color" content="#020617">
+    
+    <!-- App Icon (SVG Data URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%230284c7'/><path d='M50 20 L75 75 L50 60 L25 75 Z' fill='%23ffffff'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%230284c7'/><path d='M50 20 L75 75 L50 60 L25 75 Z' fill='%23ffffff'/></svg>">
+
+    <!-- Web App Manifest (Data URI) -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Reflect%20%26%20Leap%22%2C%22short_name%22%3A%22ReflectLeap%22%2C%22description%22%3A%22未挑戦を、明日の原動力に。成長循環型日記＆TODO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23020617%22%2C%22theme_color%22%3A%22%23020617%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'25'%20fill%3D'%230284c7'%2F%3E%3Cpath%20d%3D'M50%2020%20L75%2075%20L50%2060%20L25%2075%20Z'%20fill%3D'%23ffffff'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            accent: '#8b5cf6',
+                            positive: '#10b981',
+                            negative: '#ef4444',
+                            challenge: '#f59e0b',
+                            missed: '#ec4899'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        /* Mobile Safe Area Padding */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased text-slate-200 bg-slate-950">
+
+    <!-- Application Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-brand-500 to-pink-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-rocket text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-white via-slate-200 to-brand-500 bg-clip-text text-transparent">Reflect & Leap</h1>
+                    <p class="text-xs text-slate-400">未挑戦を、明日の原動力に。</p>
+                </div>
+            </div>
+
+            <!-- Date Selector, PWA Install & Navigation Tabs -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- PWA Install Button -->
+                <button onclick="openInstallGuideModal()" class="px-2.5 py-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span class="hidden sm:inline">アプリ追加</span>
+                </button>
+
+                <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg p-1 text-sm">
+                    <button id="prevDateBtn" class="px-2 py-1 hover:bg-slate-700 rounded text-slate-300 transition" title="前日">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <input type="date" id="currentDatePicker" class="bg-transparent text-slate-200 px-2 py-0.5 text-xs sm:text-sm font-medium focus:outline-none cursor-pointer">
+                    <button id="nextDateBtn" class="px-2 py-1 hover:bg-slate-700 rounded text-slate-300 transition" title="翌日">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                    <button id="todayBtn" class="ml-1 text-xs px-2 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded font-medium transition">
+                        今日
+                    </button>
+                </div>
+
+                <nav class="hidden md:flex bg-slate-800/80 p-1 rounded-lg border border-slate-700/60 text-xs">
+                    <button id="tabMain" onclick="switchTab('main')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition bg-brand-600 text-white shadow">
+                        <i class="fa-solid fa-pen-to-square mr-1.5"></i>今日のエントリ
+                    </button>
+                    <button id="tabAnalytics" onclick="switchTab('analytics')" class="tab-btn px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-chart-line mr-1.5"></i>成長分析
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Nav Bar -->
+    <div class="md:hidden flex border-b border-slate-800 bg-slate-900 text-xs font-medium justify-around py-2 px-4 sticky top-[57px] z-20">
+        <button id="mobileTabMain" onclick="switchTab('main')" class="flex-1 py-1.5 text-center text-brand-500 border-b-2 border-brand-500 font-bold">
+            <i class="fa-solid fa-pen-to-square mr-1"></i>今日のエントリ
+        </button>
+        <button id="mobileTabAnalytics" onclick="switchTab('analytics')" class="flex-1 py-1.5 text-center text-slate-400">
+            <i class="fa-solid fa-chart-line mr-1"></i>成長分析
+        </button>
+    </div>
+
+    <!-- Main Scrollable Area -->
+    <main class="flex-1 overflow-y-auto max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- TAB 1: MAIN ENTRY & TODO VIEW -->
+        <div id="viewMain" class="space-y-6">
+            
+            <!-- Dynamic Reminder Banner for Unchallenged Items from Yesterday/Past -->
+            <div id="reminderBanner" class="hidden rounded-2xl bg-gradient-to-r from-pink-950/80 via-purple-950/60 to-slate-900 border border-pink-500/30 p-4 md:p-5 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-pink-400 font-bold text-sm tracking-wide uppercase">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-500/20 text-pink-400">
+                                <i class="fa-solid fa-fire text-xs"></i>
+                            </span>
+                            昨日（過去）の「挑戦しなかったこと」のリマインド
+                        </div>
+                        <p id="reminderText" class="text-slate-200 text-base font-medium italic pl-8">
+                            「～」
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 pl-8 sm:pl-0 w-full sm:w-auto">
+                        <button onclick="convertMissedToChallengeTask()" class="flex-1 sm:flex-initial px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-pink-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 今日の「挑戦TODO」に追加
+                        </button>
+                        <button onclick="dismissReminder()" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition" title="閉じる">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid: Left TODOs / Right 4-Item Diary -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEFT COLUMN: TODAY'S TODOS & CHALLENGES (5 cols) -->
+                <section class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Section Card -->
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-brand-500"></i>
+                                <h2 class="font-bold text-slate-100">本日のアクション（TODO）</h2>
+                            </div>
+                            <span id="todoProgressBadge" class="text-xs bg-slate-800 text-slate-300 font-medium px-2.5 py-1 rounded-full border border-slate-700">
+                                0 / 0 完了
+                            </span>
+                        </div>
+
+                        <!-- Add Task Input Form -->
+                        <form id="todoForm" onsubmit="handleAddTask(event)" class="space-y-3">
+                            <div class="flex gap-2">
+                                <input type="text" id="taskInput" placeholder="やるべきこと・挑戦したいこと..." required
+                                    class="flex-1 bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                                <button type="submit" 
+                                    class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/30 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-xs"></i> 追加
+                                </button>
+                            </div>
+                            <!-- Task Category Selection -->
+                            <div class="flex items-center gap-4 text-xs pl-1">
+                                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+                                    <input type="radio" name="taskCategory" value="must" checked class="text-brand-500 focus:ring-0 bg-slate-950 border-slate-700">
+                                    <span><i class="fa-solid fa-check-double text-blue-400 mr-1"></i>今日やるべきこと</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+                                    <input type="radio" name="taskCategory" value="challenge" class="text-pink-500 focus:ring-0 bg-slate-950 border-slate-700">
+                                    <span><i class="fa-solid fa-bolt text-brand-challenge mr-1"></i>新たに挑戦したいこと</span>
+                                </label>
+                            </div>
+                        </form>
+
+                        <!-- Task Lists Container -->
+                        <div class="space-y-5 pt-2">
+                            
+                            <!-- Category 1: Today's Must Do -->
+                            <div class="space-y-2">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    今日やるべきこと
+                                </h3>
+                                <div id="mustTaskList" class="space-y-2 min-h-[50px]">
+                                    <!-- Dynamic Tasks Rendered Here -->
+                                </div>
+                            </div>
+
+                            <!-- Category 2: Today's Challenges -->
+                            <div class="space-y-2 pt-2 border-t border-slate-800/60">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    新たに挑戦したいこと
+                                </h3>
+                                <div id="challengeTaskList" class="space-y-2 min-h-[50px]">
+                                    <!-- Dynamic Tasks Rendered Here -->
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- RIGHT COLUMN: 4-ITEM DIARY REFLECTION (7 cols) -->
+                <section class="lg:col-span-7 space-y-6">
+                    
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-book-bookmark text-brand-accent"></i>
+                                <h2 class="font-bold text-slate-100">今日のリフレクション日記</h2>
+                            </div>
+                            <span id="saveStatusIndicator" class="text-xs text-slate-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> 自動保存済
+                            </span>
+                        </div>
+
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            一日の終わりに4つの視点で振り返りましょう。書いた「挑戦しなかったこと」は翌日の目標リマインダーとして活用されます。
+                        </p>
+
+                        <!-- 4 Input Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <!-- Item 1: Positive -->
+                            <div class="bg-slate-950/60 border border-emerald-900/40 hover:border-emerald-700/60 transition rounded-xl p-3.5 space-y-2 focus-within:ring-1 focus-within:ring-emerald-500/50">
+                                <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center">
+                                        <i class="fa-regular fa-face-smile text-emerald-400"></i>
+                                    </div>
+                                    <span>プラスに感じた出来事</span>
+                                </div>
+                                <textarea id="diaryPositive" oninput="handleDiaryInput()" placeholder="嬉しかったこと、感謝したこと、上手くいったこと..." 
+                                    class="w-full h-24 bg-transparent text-slate-200 text-sm focus:outline-none resize-none placeholder-slate-600 leading-relaxed"></textarea>
+                            </div>
+
+                            <!-- Item 2: Negative -->
+                            <div class="bg-slate-950/60 border border-rose-900/40 hover:border-rose-700/60 transition rounded-xl p-3.5 space-y-2 focus-within:ring-1 focus-within:ring-rose-500/50">
+                                <div class="flex items-center gap-2 text-rose-400 font-bold text-sm">
+                                    <div class="w-7 h-7 rounded-lg bg-rose-950/80 border border-rose-800/60 flex items-center justify-center">
+                                        <i class="fa-regular fa-face-frown text-rose-400"></i>
+                                    </div>
+                                    <span>マイナスに感じた出来事</span>
+                                </div>
+                                <textarea id="diaryNegative" oninput="handleDiaryInput()" placeholder="不安だったこと、モヤモヤしたこと、課題に感じたこと..." 
+                                    class="w-full h-24 bg-transparent text-slate-200 text-sm focus:outline-none resize-none placeholder-slate-600 leading-relaxed"></textarea>
+                            </div>
+
+                            <!-- Item 3: Tried Challenge -->
+                            <div class="bg-slate-950/60 border border-amber-900/40 hover:border-amber-700/60 transition rounded-xl p-3.5 space-y-2 focus-within:ring-1 focus-within:ring-amber-500/50">
+                                <div class="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                                    <div class="w-7 h-7 rounded-lg bg-amber-950/80 border border-amber-800/60 flex items-center justify-center">
+                                        <i class="fa-solid fa-flag text-amber-400"></i>
+                                    </div>
+                                    <span>挑戦したこと</span>
+                                </div>
+                                <textarea id="diaryTried" oninput="handleDiaryInput()" placeholder="勇気を出して行動したこと、新しく試したこと..." 
+                                    class="w-full h-24 bg-transparent text-slate-200 text-sm focus:outline-none resize-none placeholder-slate-600 leading-relaxed"></textarea>
+                            </div>
+
+                            <!-- Item 4: Missed Challenge (Crucial for Reminders) -->
+                            <div class="bg-slate-950/60 border border-pink-900/50 hover:border-pink-700/70 transition rounded-xl p-3.5 space-y-2 focus-within:ring-1 focus-within:ring-pink-500/50 relative overflow-hidden">
+                                <div class="flex items-center justify-between text-pink-400 font-bold text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-lg bg-pink-950/80 border border-pink-800/60 flex items-center justify-center">
+                                            <i class="fa-solid fa-arrow-rotate-right text-pink-400"></i>
+                                        </div>
+                                        <span>挑戦しなかったこと</span>
+                                    </div>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-pink-950 text-pink-300 border border-pink-800/50">翌日へリマインド</span>
+                                </div>
+                                <textarea id="diaryMissed" oninput="handleDiaryInput()" placeholder="やりたかったけど見送ったこと、後回しにしてしまったこと..." 
+                                    class="w-full h-24 bg-transparent text-slate-200 text-sm focus:outline-none resize-none placeholder-slate-600 leading-relaxed"></textarea>
+                            </div>
+
+                        </div>
+
+                        <!-- Reflection Summary / Quote -->
+                        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3 text-xs text-slate-400">
+                            <i class="fa-solid fa-quote-left text-brand-500 text-base"></i>
+                            <p class="italic">「挑戦しなかったこと」を認めることが、明日の大きな一歩をつくります。</p>
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 2: ANALYTICS & HISTORY VIEW -->
+        <div id="viewAnalytics" class="space-y-6 hidden">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Stat Card 1 -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">通算・挑戦記録数</div>
+                        <div id="statTotalTried" class="text-2xl font-bold text-slate-100">0 回</div>
+                    </div>
+                </div>
+
+                <!-- Stat Card 2 -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-arrows-spin"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">リマインドから達成した挑戦</div>
+                        <div id="statConvertedChallenges" class="text-2xl font-bold text-slate-100">0 件</div>
+                    </div>
+                </div>
+
+                <!-- Stat Card 3 -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">日記継続日数</div>
+                        <div id="statStreakDays" class="text-2xl font-bold text-slate-100">0 日</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Challenge activity over time -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-brand-500"></i> 直近7日間の振り返りアクティビティ
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Positive vs Negative mood ratio -->
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-pie-chart text-brand-accent"></i> 感情＆出来事の記録バランス
+                    </h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="balanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- PWA Installation Guide Modal -->
+    <div id="pwaModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+            <button onclick="closeInstallGuideModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white text-2xl shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-rocket"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">スマホアプリとして追加</h3>
+                    <p class="text-xs text-slate-400">ホーム画面に追加するとアプリ化されます</p>
+                </div>
+            </div>
+
+            <div id="installGuideAndroid" class="space-y-3 border-t border-slate-800 pt-4">
+                <p class="text-xs font-bold text-brand-400 flex items-center gap-1">
+                    <i class="fa-brands fa-android"></i> Android (Chrome) の場合:
+                </p>
+                <div id="androidNativePromptContainer" class="hidden">
+                    <button id="androidInstallBtn" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-download"></i> 今すぐアプリをインストール
+                    </button>
+                </div>
+                <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <li>画面右上の <i class="fa-solid fa-ellipsis-vertical text-slate-400"></i> (メニュー) をタップ</li>
+                    <li>「<strong>アプリをインストール</strong>」または「<strong>ホーム画面に追加</strong>」を選択</li>
+                </ol>
+            </div>
+
+            <div class="space-y-3 border-t border-slate-800 pt-4">
+                <p class="text-xs font-bold text-pink-400 flex items-center gap-1">
+                    <i class="fa-brands fa-apple"></i> iPhone / iPad (Safari) の場合:
+                </p>
+                <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <li>画面下部（または上部）の <strong>共有ボタン</strong> <i class="fa-solid fa-arrow-up-from-bracket text-brand-400"></i> をタップ</li>
+                    <li>メニューから「<strong>ホーム画面に追加</strong> <i class="fa-regular fa-square-plus text-slate-400"></i>」を選択</li>
+                    <li>右上の「追加」を押すと、ホーム画面にアイコンが表示されます</li>
+                </ol>
+            </div>
+
+            <button onclick="closeInstallGuideModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STATE & MANAGEMENT ---
+        let selectedDateStr = getFormattedDate(new Date());
+        let currentTab = 'main';
+
+        // PWA Install Event Handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const container = document.getElementById('androidNativePromptContainer');
+            if (container) container.classList.remove('hidden');
+        });
+
+        document.getElementById('androidInstallBtn')?.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted PWA install');
+                }
+                deferredPrompt = null;
+                closeInstallGuideModal();
+            }
+        });
+
+        function openInstallGuideModal() {
+            document.getElementById('pwaModal').classList.remove('hidden');
+        }
+
+        function closeInstallGuideModal() {
+            document.getElementById('pwaModal').classList.add('hidden');
+        }
+
+        // Register Inline Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'reflect-leap-cache-v1';
+                self.addEventListener('install', (e) => { self.skipWaiting(); });
+                self.addEventListener('activate', (e) => { self.clients.claim(); });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        fetch(e.request).catch(() => caches.match(e.request))
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Registration:', err));
+        }
+
+        // Core Local Storage Data Structure:
+        let appData = {};
+
+        // Helper: Format Date to YYYY-MM-DD
+        function getFormattedDate(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // Helper: Get Yesterday's Date String
+        function getYesterdayDateStr(baseDateStr) {
+            const d = new Date(baseDateStr);
+            d.setDate(d.getDate() - 1);
+            return getFormattedDate(d);
+        }
+
+        // Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            setupDatePickers();
+            renderViewForSelectedDate();
+            checkAndShowMissedReminder();
+        });
+
+        // Load Data from LocalStorage
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem('reflect_leap_data');
+                if (saved) {
+                    appData = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error("Failed to load local storage", e);
+                appData = {};
+            }
+        }
+
+        // Save Data to LocalStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('reflect_leap_data', JSON.stringify(appData));
+                showSaveIndicator();
+            } catch (e) {
+                console.error("Failed to save local storage", e);
+            }
+        }
+
+        function showSaveIndicator() {
+            const ind = document.getElementById('saveStatusIndicator');
+            if (ind) {
+                ind.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> 保存完了`;
+                setTimeout(() => {
+                    ind.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> 自動保存済`;
+                }, 1500);
+            }
+        }
+
+        // Get Entry Object for a Date (Guarantees default object)
+        function getEntryForDate(dateStr) {
+            if (!appData[dateStr]) {
+                appData[dateStr] = {
+                    tasks: [],
+                    diary: { positive: "", negative: "", tried: "", missed: "" }
+                };
+            }
+            return appData[dateStr];
+        }
+
+        // --- DATE CONTROL LOGIC ---
+        function setupDatePickers() {
+            const dateInput = document.getElementById('currentDatePicker');
+            dateInput.value = selectedDateStr;
+
+            dateInput.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    selectedDateStr = e.target.value;
+                    renderViewForSelectedDate();
+                    checkAndShowMissedReminder();
+                }
+            });
+
+            document.getElementById('prevDateBtn').addEventListener('click', () => {
+                const cur = new Date(selectedDateStr);
+                cur.setDate(cur.getDate() - 1);
+                selectedDateStr = getFormattedDate(cur);
+                dateInput.value = selectedDateStr;
+                renderViewForSelectedDate();
+                checkAndShowMissedReminder();
+            });
+
+            document.getElementById('nextDateBtn').addEventListener('click', () => {
+                const cur = new Date(selectedDateStr);
+                cur.setDate(cur.getDate() + 1);
+                selectedDateStr = getFormattedDate(cur);
+                dateInput.value = selectedDateStr;
+                renderViewForSelectedDate();
+                checkAndShowMissedReminder();
+            });
+
+            document.getElementById('todayBtn').addEventListener('click', () => {
+                selectedDateStr = getFormattedDate(new Date());
+                dateInput.value = selectedDateStr;
+                renderViewForSelectedDate();
+                checkAndShowMissedReminder();
+            });
+        }
+
+        // --- RENDER CURRENT DATE VIEW ---
+        function renderViewForSelectedDate() {
+            const entry = getEntryForDate(selectedDateStr);
+
+            // Render Diary Inputs
+            document.getElementById('diaryPositive').value = entry.diary.positive || "";
+            document.getElementById('diaryNegative').value = entry.diary.negative || "";
+            document.getElementById('diaryTried').value = entry.diary.tried || "";
+            document.getElementById('diaryMissed').value = entry.diary.missed || "";
+
+            // Render Task Lists
+            renderTaskList();
+        }
+
+        // --- DIARY INPUT HANDLER ---
+        let debounceTimer;
+        function handleDiaryInput() {
+            const entry = getEntryForDate(selectedDateStr);
+            entry.diary.positive = document.getElementById('diaryPositive').value;
+            entry.diary.negative = document.getElementById('diaryNegative').value;
+            entry.diary.tried = document.getElementById('diaryTried').value;
+            entry.diary.missed = document.getElementById('diaryMissed').value;
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                saveToLocalStorage();
+            }, 500);
+        }
+
+        // --- TASK MANAGEMENT LOGIC ---
+        function handleAddTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const category = document.querySelector('input[name="taskCategory"]:checked').value;
+            const entry = getEntryForDate(selectedDateStr);
+
+            entry.tasks.push({
+                id: 'task_' + Date.now(),
+                text: text,
+                category: category,
+                completed: false,
+                isFromReminder: false
+            });
+
+            input.value = '';
+            saveToLocalStorage();
+            renderTaskList();
+        }
+
+        function toggleTaskComplete(taskId) {
+            const entry = getEntryForDate(selectedDateStr);
+            const task = entry.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                saveToLocalStorage();
+                renderTaskList();
+
+                if (task.completed) {
+                    triggerConfetti();
+                }
+            }
+        }
+
+        function deleteTask(taskId) {
+            const entry = getEntryForDate(selectedDateStr);
+            entry.tasks = entry.tasks.filter(t => t.id !== taskId);
+            saveToLocalStorage();
+            renderTaskList();
+        }
+
+        function renderTaskList() {
+            const entry = getEntryForDate(selectedDateStr);
+            const mustList = document.getElementById('mustTaskList');
+            const challengeList = document.getElementById('challengeTaskList');
+
+            mustList.innerHTML = '';
+            challengeList.innerHTML = '';
+
+            const mustTasks = entry.tasks.filter(t => t.category === 'must');
+            const challengeTasks = entry.tasks.filter(t => t.category === 'challenge');
+
+            // Render Must Tasks
+            if (mustTasks.length === 0) {
+                mustList.innerHTML = `<p class="text-xs text-slate-500 italic py-1">タスクはありません</p>`;
+            } else {
+                mustTasks.forEach(task => {
+                    mustList.appendChild(createTaskElement(task));
+                });
+            }
+
+            // Render Challenge Tasks
+            if (challengeTasks.length === 0) {
+                challengeList.innerHTML = `<p class="text-xs text-slate-500 italic py-1">挑戦目標はありません</p>`;
+            } else {
+                challengeTasks.forEach(task => {
+                    challengeList.appendChild(createTaskElement(task));
+                });
+            }
+
+            // Update Progress Badge
+            const total = entry.tasks.length;
+            const completed = entry.tasks.filter(t => t.completed).length;
+            document.getElementById('todoProgressBadge').innerText = `${completed} / ${total} 完了`;
+        }
+
+        function createTaskElement(task) {
+            const div = document.createElement('div');
+            div.className = `flex items-center justify-between p-2.5 rounded-xl border transition ${
+                task.completed 
+                    ? 'bg-slate-950/40 border-slate-800 text-slate-500' 
+                    : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-200'
+            }`;
+
+            const left = document.createElement('div');
+            left.className = 'flex items-center gap-3 flex-1 min-w-0 pr-2';
+
+            const checkbox = document.createElement('button');
+            checkbox.type = 'button';
+            checkbox.onclick = () => toggleTaskComplete(task.id);
+            checkbox.className = `w-5 h-5 rounded-md flex items-center justify-center transition ${
+                task.completed 
+                    ? 'bg-emerald-500 text-slate-950 font-bold' 
+                    : 'border border-slate-600 hover:border-brand-500'
+            }`;
+            if (task.completed) {
+                checkbox.innerHTML = `<i class="fa-solid fa-check text-xs"></i>`;
+            }
+
+            const textSpan = document.createElement('span');
+            textSpan.className = `text-sm truncate ${task.completed ? 'line-through text-slate-500' : ''}`;
+            textSpan.innerText = task.text;
+
+            left.appendChild(checkbox);
+
+            if (task.isFromReminder) {
+                const remBadge = document.createElement('span');
+                remBadge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-pink-950/80 text-pink-400 border border-pink-800/40 shrink-0';
+                remBadge.innerHTML = `<i class="fa-solid fa-fire mr-1"></i>リマインド`;
+                left.appendChild(remBadge);
+            }
+
+            left.appendChild(textSpan);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = () => deleteTask(task.id);
+            deleteBtn.className = 'text-slate-500 hover:text-rose-400 p-1 transition';
+            deleteBtn.innerHTML = `<i class="fa-solid fa-trash-can text-xs"></i>`;
+
+            div.appendChild(left);
+            div.appendChild(deleteBtn);
+
+            return div;
+        }
+
+        // --- UNCHALLENGED (MISSED) REMINDER LOGIC ---
+        let currentReminderText = "";
+
+        function checkAndShowMissedReminder() {
+            const banner = document.getElementById('reminderBanner');
+            const yesterdayStr = getYesterdayDateStr(selectedDateStr);
+            const yesterdayEntry = appData[yesterdayStr];
+
+            if (yesterdayEntry && yesterdayEntry.diary && yesterdayEntry.diary.missed && yesterdayEntry.diary.missed.trim() !== "") {
+                currentReminderText = yesterdayEntry.diary.missed.trim();
+                document.getElementById('reminderText').innerText = `「${currentReminderText}」`;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function convertMissedToChallengeTask() {
+            if (!currentReminderText) return;
+
+            const entry = getEntryForDate(selectedDateStr);
+            
+            // Check if already added to avoid duplication
+            const exists = entry.tasks.some(t => t.text === currentReminderText);
+            if (!exists) {
+                entry.tasks.push({
+                    id: 'task_' + Date.now(),
+                    text: currentReminderText,
+                    category: 'challenge',
+                    completed: false,
+                    isFromReminder: true
+                });
+                saveToLocalStorage();
+                renderTaskList();
+            }
+
+            dismissReminder();
+        }
+
+        function dismissReminder() {
+            document.getElementById('reminderBanner').classList.add('hidden');
+        }
+
+        // Confetti Effect for Task Completion
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.8 },
+                    colors: ['#0ea5e9', '#10b981', '#f59e0b', '#ec4899']
+                });
+            }
+        }
+
+        // --- TAB SWITCHING & ANALYTICS ---
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            const mainView = document.getElementById('viewMain');
+            const analyticsView = document.getElementById('viewAnalytics');
+
+            const btnMain = document.getElementById('tabMain');
+            const btnAnalytics = document.getElementById('tabAnalytics');
+            const mobileBtnMain = document.getElementById('mobileTabMain');
+            const mobileBtnAnalytics = document.getElementById('mobileTabAnalytics');
+
+            if (tabName === 'main') {
+                mainView.classList.remove('hidden');
+                analyticsView.classList.add('hidden');
+
+                btnMain.className = "tab-btn px-3 py-1.5 rounded-md font-medium transition bg-brand-600 text-white shadow";
+                btnAnalytics.className = "tab-btn px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition";
+
+                mobileBtnMain.className = "flex-1 py-1.5 text-center text-brand-500 border-b-2 border-brand-500 font-bold";
+                mobileBtnAnalytics.className = "flex-1 py-1.5 text-center text-slate-400";
+            } else {
+                mainView.classList.add('hidden');
+                analyticsView.classList.remove('hidden');
+
+                btnAnalytics.className = "tab-btn px-3 py-1.5 rounded-md font-medium transition bg-brand-600 text-white shadow";
+                btnMain.className = "tab-btn px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-white transition";
+
+                mobileBtnAnalytics.className = "flex-1 py-1.5 text-center text-brand-500 border-b-2 border-brand-500 font-bold";
+                mobileBtnMain.className = "flex-1 py-1.5 text-center text-slate-400";
+
+                renderAnalytics();
+            }
+        }
+
+        let activityChartInstance = null;
+        let balanceChartInstance = null;
+
+        function renderAnalytics() {
+            let totalTried = 0;
+            let convertedChallenges = 0;
+            let streak = Object.keys(appData).filter(k => {
+                const d = appData[k].diary;
+                return d.positive || d.negative || d.tried || d.missed;
+            }).length;
+
+            let posCount = 0;
+            let negCount = 0;
+            let triedCount = 0;
+            let missedCount = 0;
+
+            Object.values(appData).forEach(entry => {
+                if (entry.diary.tried && entry.diary.tried.trim()) totalTried++;
+                if (entry.diary.positive && entry.diary.positive.trim()) posCount++;
+                if (entry.diary.negative && entry.diary.negative.trim()) negCount++;
+                if (entry.diary.tried && entry.diary.tried.trim()) triedCount++;
+                if (entry.diary.missed && entry.diary.missed.trim()) missedCount++;
+
+                entry.tasks.forEach(t => {
+                    if (t.isFromReminder && t.completed) {
+                        convertedChallenges++;
+                    }
+                });
+            });
+
+            document.getElementById('statTotalTried').innerText = `${totalTried} 回`;
+            document.getElementById('statConvertedChallenges').innerText = `${convertedChallenges} 件`;
+            document.getElementById('statStreakDays').innerText = `${streak} 日`;
+
+            const daysLabels = [];
+            const taskCounts = [];
+            const challengeCounts = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = getFormattedDate(d);
+                daysLabels.push(`${d.getMonth()+1}/${d.getDate()}`);
+
+                const entry = appData[dateStr];
+                if (entry) {
+                    const completedTasks = entry.tasks.filter(t => t.completed).length;
+                    const hasTriedDiary = entry.diary.tried && entry.diary.tried.trim() ? 1 : 0;
+                    taskCounts.push(completedTasks);
+                    challengeCounts.push(hasTriedDiary);
+                } else {
+                    taskCounts.push(0);
+                    challengeCounts.push(0);
+                }
+            }
+
+            const ctx1 = document.getElementById('activityChart').getContext('2d');
+            if (activityChartInstance) activityChartInstance.destroy();
+
+            activityChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: daysLabels,
+                    datasets: [
+                        {
+                            label: '完了したTODO',
+                            data: taskCounts,
+                            backgroundColor: '#0ea5e9',
+                            borderRadius: 6
+                        },
+                        {
+                            label: '挑戦記録の有無',
+                            data: challengeCounts,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('balanceChart').getContext('2d');
+            if (balanceChartInstance) balanceChartInstance.destroy();
+
+            balanceChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['プラスの出来事', 'マイナスの出来事', '挑戦したこと', '挑戦しなかったこと'],
+                    datasets: [{
+                        data: [posCount || 1, negCount || 1, triedCount || 1, missedCount || 1],
+                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#ec4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
