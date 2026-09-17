@@ -1,0 +1,18 @@
+{
+"name": "Reflect & Leap",
+"short_name": "ReflectLeap",
+"description": "未挑戦を、明日の原動力に。成長循環型日記＆TODO",
+"start_url": "./index.html",
+"display": "standalone",
+"orientation": "portrait",
+"background_color": "#020617",
+"theme_color": "#020617",
+"icons": [
+{
+"src": "data:image/svg+xml,",
+"sizes": "192x192 512x512",
+"type": "image/svg+xml",
+"purpose": "any maskable"
+}
+]
+}
