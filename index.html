@@ -16,8 +16,8 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%230284c7'/><path d='M50 20 L75 75 L50 60 L25 75 Z' fill='%23ffffff'/></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%230284c7'/><path d='M50 20 L75 75 L50 60 L25 75 Z' fill='%23ffffff'/></svg>">
 
-    <!-- Web App Manifest (Data URI) -->
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Reflect%20%26%20Leap%22%2C%22short_name%22%3A%22ReflectLeap%22%2C%22description%22%3A%22未挑戦を、明日の原動力に。成長循環型日記＆TODO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23020617%22%2C%22theme_color%22%3A%22%23020617%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'25'%20fill%3D'%230284c7'%2F%3E%3Cpath%20d%3D'M50%2020%20L75%2075%20L50%2060%20L25%2075%20Z'%20fill%3D'%23ffffff'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -470,21 +470,13 @@
             document.getElementById('pwaModal').classList.add('hidden');
         }
 
-        // Register Inline Service Worker for PWA
+        // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'reflect-leap-cache-v1';
-                self.addEventListener('install', (e) => { self.skipWaiting(); });
-                self.addEventListener('activate', (e) => { self.clients.claim(); });
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(
-                        fetch(e.request).catch(() => caches.match(e.request))
-                    );
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Registration:', err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.log('SW Reg Fail:', err));
+            });
         }
 
         // Core Local Storage Data Structure:
